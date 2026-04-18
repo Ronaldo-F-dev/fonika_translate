@@ -235,7 +235,7 @@ class _TranslationTabState extends State<_TranslationTab> {
           if (_loading) const LinearProgressIndicator(),
           if (_result.isNotEmpty)
             _resultCard(
-              title: 'Source : $_source${_fromLocal ? ' 🟢 offline' : ' 🌐 API'}',
+              title: 'Source : $_source${_fromLocal ? ' [offline]' : ' [API]'}',
               body: _result,
               color: _fromLocal ? Colors.green.shade50 : Colors.blue.shade50,
             ),
@@ -286,7 +286,7 @@ class _VoiceTabState extends State<_VoiceTab> {
           _section('TTS — Widget FonikaSpeakButton'),
           const Text(
             'Appuie sur l\'icône pour entendre la synthèse vocale.\n'
-            '🌍 Langues africaines → API  |  🌐 Autres → plateforme',
+            'Langues africaines → API  |  Autres → plateforme',
             style: TextStyle(color: Colors.grey, fontSize: 13),
           ),
           const SizedBox(height: 12),
@@ -344,8 +344,8 @@ class _VoiceTabState extends State<_VoiceTab> {
     {'text': 'Bonjour le monde', 'lang': 'fr', 'label': 'Français', 'engine': 'flutter_tts'},
     {'text': 'Hello world', 'lang': 'en', 'label': 'English', 'engine': 'flutter_tts'},
     {'text': 'Hola mundo', 'lang': 'es', 'label': 'Español', 'engine': 'flutter_tts'},
-    {'text': 'È dó wɛ̀', 'lang': 'fon', 'label': 'Fon 🌍', 'engine': '229Langues API'},
-    {'text': 'Ẹ káàárọ̀', 'lang': 'yoruba', 'label': 'Yoruba 🌍', 'engine': '229Langues API'},
+    {'text': 'È dó wɛ̀', 'lang': 'fon', 'label': 'Fon [africain]', 'engine': '229Langues API'},
+    {'text': 'Ẹ káàárọ̀', 'lang': 'yoruba', 'label': 'Yoruba [africain]', 'engine': '229Langues API'},
   ];
 }
 
