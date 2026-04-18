@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../client/http_client.dart';
 import '../models/pdf_result.dart';
@@ -34,10 +35,9 @@ class PdfService {
       {'from_lang': fromLang, 'to_lang': toLang},
       {'file': multipartFile},
       returnBytes: true,
-    ) as List<int>;
+    ) as Uint8List;
 
-    return PdfTranslateResult.fromBytes(
-        bytes is List<int> ? bytes as dynamic : bytes);
+    return PdfTranslateResult.fromBytes(bytes);
   }
 
   Future<PdfExtractResult> extractText(File file) async {

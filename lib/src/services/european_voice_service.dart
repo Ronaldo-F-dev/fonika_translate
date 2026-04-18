@@ -205,7 +205,7 @@ class EuropeanVoiceService {
       localeId: locale,
       listenFor: listenFor ?? const Duration(seconds: 30),
       pauseFor: pauseFor ?? const Duration(seconds: 3),
-      cancelOnError: true,
+      listenOptions: SpeechListenOptions(cancelOnError: true),
     );
 
     return true;
