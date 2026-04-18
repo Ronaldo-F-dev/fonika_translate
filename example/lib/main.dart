@@ -142,7 +142,7 @@ class _TranslationTabState extends State<_TranslationTab> {
 
   Future<void> _translate() async {
     setState(() { _loading = true; _result = ''; });
-    final r = await FonikaProvider.of(context).translate(
+    final r = await fonika.translate(
       _controller.text,
       fromLang: 'auto',
       toLang: 'en',
@@ -158,7 +158,7 @@ class _TranslationTabState extends State<_TranslationTab> {
   Future<void> _translateLocalKey() async {
     setState(() { _loading = true; _result = ''; });
     // "greeting" est dans les traductions locales → zéro appel réseau
-    final r = await FonikaProvider.of(context).translate('greeting', toLang: 'fr');
+    final r = await fonika.translate('greeting', toLang: 'fr');
     setState(() {
       _loading = false;
       _result = r.translatedText;
@@ -169,7 +169,7 @@ class _TranslationTabState extends State<_TranslationTab> {
 
   Future<void> _translateBatch() async {
     setState(() { _loading = true; _result = ''; });
-    final r = await FonikaProvider.of(context).translateBatch(
+    final r = await fonika.translateBatch(
       ['greeting', 'Merci beaucoup', 'farewell'],
       toLang: 'en',
     );
@@ -368,24 +368,22 @@ class _CacheTabState extends State<_CacheTab> {
   @override
   void initState() {
     super.initState();
-    _refreshCount();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshCount());
   }
 
   Future<void> _refreshCount() async {
-    final count = await FonikaProvider.of(context).getDeviceCacheCount();
+    final count = await fonika.getDeviceCacheCount();
     if (mounted) setState(() => _deviceCacheCount = count);
   }
 
   Future<void> _testCacheHit() async {
     setState(() { _loading = true; _log = ''; });
-    final client = FonikaProvider.of(context);
-
     final sw1 = Stopwatch()..start();
-    final r1 = await client.translate('Bonjour', fromLang: 'fr', toLang: 'en');
+    final r1 = await fonika.translate('Bonjour', fromLang: 'fr', toLang: 'en');
     sw1.stop();
 
     final sw2 = Stopwatch()..start();
-    final r2 = await client.translate('Bonjour', fromLang: 'fr', toLang: 'en');
+    final r2 = await fonika.translate('Bonjour', fromLang: 'fr', toLang: 'en');
     sw2.stop();
 
     await _refreshCount();
@@ -398,20 +396,20 @@ class _CacheTabState extends State<_CacheTab> {
   }
 
   Future<void> _clearDeviceCache() async {
-    await FonikaProvider.of(context).clearDeviceCache();
+    await fonika.clearDeviceCache();
     await _refreshCount();
     setState(() => _log = 'Cache device vidé.');
   }
 
   Future<void> _evictExpired() async {
-    final removed = await FonikaProvider.of(context).evictExpiredDeviceCache();
+    final removed = await fonika.evictExpiredDeviceCache();
     await _refreshCount();
     setState(() => _log = '$removed entrée(s) expirée(s) supprimée(s).');
   }
 
   Future<void> _checkHealth() async {
     setState(() { _loading = true; });
-    final s = await FonikaProvider.of(context).healthCheck();
+    final s = await fonika.healthCheck();
     setState(() {
       _loading = false;
       _healthStatus = '${s.status} | DB: ${s.database}';

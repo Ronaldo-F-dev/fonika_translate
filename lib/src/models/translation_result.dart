@@ -23,13 +23,13 @@ class TranslationResult {
     final data = json['data'] as Map<String, dynamic>;
     final meta = data['metadata'] as Map<String, dynamic>? ?? {};
     return TranslationResult(
-      success: json['success'] as bool,
-      translatedText: data['text'] as String,
-      sourceLanguage: data['source_language'] as String,
-      sourceLanguageName: data['source_language_name'] as String,
-      targetLanguage: data['target_language'] as String,
-      targetLanguageName: data['target_language_name'] as String,
-      originalText: meta['original_text'] as String? ?? '',
+      success: (json['success'] as bool?) ?? true,
+      translatedText: (data['text'] as String?) ?? '',
+      sourceLanguage: (data['source_language'] as String?) ?? 'auto',
+      sourceLanguageName: (data['source_language_name'] as String?) ?? '',
+      targetLanguage: (data['target_language'] as String?) ?? '',
+      targetLanguageName: (data['target_language_name'] as String?) ?? '',
+      originalText: (meta['original_text'] as String?) ?? '',
     );
   }
 
