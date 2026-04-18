@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fonika_translate/fonika_translate.dart';
 
-// ---------------------------------------------------------------------------
-// Initialisation du client avec les nouvelles options 0.1.0
-final FonikaTranslate fonika = FonikaTranslate(
-  apiToken: 'YOUR_HF_TOKEN', // remplace par ton token HuggingFace
-  maxRetries: 3,                            // retry auto sur cold start
-  deviceCacheTtl: const Duration(days: 7), // cache local 7 jours
-);
+late final FonikaTranslate fonika;
 
-void main() => runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+
+  fonika = FonikaTranslate(
+    apiToken: dotenv.env['HF_TOKEN'],
+    maxRetries: 3,
+    deviceCacheTtl: const Duration(days: 7),
+  );
+
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

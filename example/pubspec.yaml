@@ -11,3 +11,8 @@ dependencies:
     sdk: flutter
   fonika_translate:
     path: ../
+  flutter_dotenv: ^5.2.1
+
+flutter:
+  assets:
+    - .env
