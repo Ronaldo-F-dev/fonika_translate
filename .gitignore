@@ -9,3 +9,12 @@ pubspec.lock
 *.iml
 .DS_Store
 Thumbs.db
+
+# Example app generated files
+example/.dart_tool/
+example/build/
+example/.flutter-plugins
+example/.flutter-plugins-dependencies
+example/pubspec.lock
+example/.idea/
+example/*.iml
