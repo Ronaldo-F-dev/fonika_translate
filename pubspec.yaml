@@ -3,7 +3,7 @@ description: >-
   Multilingual translation, TTS and ASR for Flutter — African languages
   (Fon, Yoruba, Hausa, Adja, Bariba) + 100 world languages. Offline-first
   with local translations support and automatic language detection.
-version: 0.0.1
+version: 0.0.2
 homepage: https://229langues.bj
 repository: https://github.com/Ronaldo-F-dev/fonika_translate
 issue_tracker: https://github.com/Ronaldo-F-dev/fonika_translate/issues

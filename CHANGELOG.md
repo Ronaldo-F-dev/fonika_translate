@@ -1,3 +1,7 @@
+## 0.0.2
+
+- Fix: upgrade speech_to_text to v7.x for Android Gradle compatibility
+
 ## 0.0.1
 
 - Initial release
