@@ -17,6 +17,7 @@ import 'services/cache_service.dart';
 import 'services/european_voice_service.dart';
 import 'services/local_translations_service.dart';
 import 'services/pdf_service.dart';
+import 'services/local_cache_service.dart';
 import 'services/translation_service.dart';
 
 export 'services/african_voice_service.dart'
@@ -61,6 +62,7 @@ class FonikaTranslate {
   late final EuropeanVoiceService _europeanVoice;
   late final PdfService _pdf;
   late final CacheService _cache;
+  late final LocalCacheService _deviceCache;
 
   bool _initialized = false;
 
@@ -68,6 +70,8 @@ class FonikaTranslate {
     this.apiToken,
     this.baseUrl = defaultBaseUrl,
     this.timeout = const Duration(seconds: 60),
+    int maxRetries = 3,
+    Duration deviceCacheTtl = const Duration(days: 7),
     double ttsSpeechRate = 0.5,
     double ttsPitch = 1.0,
     double ttsVolume = 1.0,
@@ -76,7 +80,9 @@ class FonikaTranslate {
       baseUrl: baseUrl,
       apiToken: apiToken,
       timeout: timeout,
+      maxRetries: maxRetries,
     );
+    _deviceCache = LocalCacheService(ttl: deviceCacheTtl);
     _translation = TranslationService(_http);
     _local = LocalTranslationsService();
     _africanVoice = AfricanVoiceService(_http);
@@ -98,6 +104,8 @@ class FonikaTranslate {
     if (assetPaths != null && assetPaths.isNotEmpty) {
       await _local.loadFromAssets(assetPaths);
     }
+    // Evict stale device cache entries on startup
+    await _deviceCache.evictExpired();
     _initialized = true;
   }
 
@@ -157,21 +165,40 @@ class FonikaTranslate {
   /// 2. API call with automatic language detection
   ///
   /// Set [skipLocal] to true to bypass local lookup and always call the API.
+  /// Set [skipDeviceCache] to true to skip the on-device cache.
+  ///
+  /// **Full priority chain:**
+  /// 1. Local translations (key-based, instant, offline)
+  /// 2. Device cache (previous API results, offline)
+  /// 3. API call
   Future<TranslationResult> translate(
     String text, {
     String toLang = 'en',
     String fromLang = 'auto',
     bool saveToCache = true,
     bool skipLocal = false,
+    bool skipDeviceCache = false,
   }) async {
+    // 1. Local translations
     if (!skipLocal) {
       final localValue = _local.translate(text, toLang);
       if (localValue != null) {
         return TranslationResult.fromLocal(text, localValue, toLang);
       }
     }
-    return _translation.translate(text,
+    // 2. Device cache
+    if (!skipDeviceCache) {
+      final cached = await _deviceCache.get(text, fromLang, toLang);
+      if (cached != null) return cached;
+    }
+    // 3. API call
+    final result = await _translation.translate(text,
         toLang: toLang, fromLang: fromLang, saveToCache: saveToCache);
+    // Save to device cache
+    if (!skipDeviceCache) {
+      await _deviceCache.put(text, fromLang, toLang, result);
+    }
+    return result;
   }
 
   /// Translates a list of [texts] in one API call.
@@ -385,13 +412,27 @@ class FonikaTranslate {
   }
 
   // ---------------------------------------------------------------------------
-  // Cache & Health
+  // API Cache & Health
 
+  /// Stats from the remote API translation cache.
   Future<CacheStats> getCacheStats() => _cache.getStats();
 
-  Future<void> clearCache() => _cache.clear();
+  /// Clears the remote API cache.
+  Future<void> clearApiCache() => _cache.clear();
 
   Future<HealthStatus> healthCheck() => _cache.healthCheck();
+
+  // ---------------------------------------------------------------------------
+  // Device Cache
+
+  /// Number of translations stored in the on-device cache.
+  Future<int> getDeviceCacheCount() => _deviceCache.count();
+
+  /// Clears all translations stored on the device.
+  Future<void> clearDeviceCache() => _deviceCache.clear();
+
+  /// Removes expired entries from the device cache.
+  Future<int> evictExpiredDeviceCache() => _deviceCache.evictExpired();
 
   // ---------------------------------------------------------------------------
   // Private helpers
