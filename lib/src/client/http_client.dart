@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
+
 import 'package:http/http.dart' as http;
 
 class FonikaHttpClient {
@@ -7,10 +9,15 @@ class FonikaHttpClient {
   final String? apiToken;
   final Duration timeout;
 
+  /// Max number of retry attempts on server errors or timeouts.
+  /// Set to 0 to disable retries.
+  final int maxRetries;
+
   FonikaHttpClient({
     required this.baseUrl,
     this.apiToken,
     this.timeout = const Duration(seconds: 60),
+    this.maxRetries = 3,
   });
 
   Map<String, String> get _headers => {
@@ -22,14 +29,68 @@ class FonikaHttpClient {
         if (apiToken != null) 'Authorization': 'Bearer $apiToken',
       };
 
-  Future<Map<String, dynamic>> get(String path) async {
+  // ---------------------------------------------------------------------------
+  // Public methods — all wrapped with retry
+
+  Future<Map<String, dynamic>> get(String path) =>
+      _withRetry(() => _get(path));
+
+  Future<Map<String, dynamic>> post(
+          String path, Map<String, dynamic> body) =>
+      _withRetry(() => _post(path, body));
+
+  Future<Uint8List> postBytes(String path, Map<String, dynamic> body) =>
+      _withRetry(() => _postBytes(path, body));
+
+  Future<dynamic> postMultipart(
+    String path,
+    Map<String, String> fields,
+    Map<String, http.MultipartFile> files, {
+    bool returnBytes = false,
+  }) =>
+      _withRetry(() => _postMultipart(path, fields, files,
+          returnBytes: returnBytes));
+
+  // ---------------------------------------------------------------------------
+  // Retry logic
+
+  Future<T> _withRetry<T>(Future<T> Function() fn) async {
+    int attempt = 0;
+    while (true) {
+      try {
+        return await fn();
+      } on FonikaApiException catch (e) {
+        if (attempt >= maxRetries || !_isRetryable(e.statusCode)) rethrow;
+        await _backoff(attempt);
+        attempt++;
+      } catch (_) {
+        // TimeoutException, SocketException, etc.
+        if (attempt >= maxRetries) rethrow;
+        await _backoff(attempt);
+        attempt++;
+      }
+    }
+  }
+
+  /// Retryable: 5xx server errors and 429 rate limit (HF Spaces cold start).
+  bool _isRetryable(int statusCode) =>
+      statusCode >= 500 || statusCode == 429;
+
+  /// Exponential backoff: 1s, 2s, 4s, 8s…
+  Future<void> _backoff(int attempt) =>
+      Future.delayed(Duration(seconds: math.pow(2, attempt).toInt()));
+
+  // ---------------------------------------------------------------------------
+  // Internal implementations (no retry)
+
+  Future<Map<String, dynamic>> _get(String path) async {
     final uri = Uri.parse('$baseUrl$path');
     final response =
         await http.get(uri, headers: _headers).timeout(timeout);
     return _handleJson(response);
   }
 
-  Future<Map<String, dynamic>> post(
+  Future<Map<String, dynamic>> _post(
       String path, Map<String, dynamic> body) async {
     final uri = Uri.parse('$baseUrl$path');
     final response = await http
@@ -38,7 +99,7 @@ class FonikaHttpClient {
     return _handleJson(response);
   }
 
-  Future<Uint8List> postBytes(
+  Future<Uint8List> _postBytes(
       String path, Map<String, dynamic> body) async {
     final uri = Uri.parse('$baseUrl$path');
     final response = await http
@@ -48,7 +109,7 @@ class FonikaHttpClient {
     return response.bodyBytes;
   }
 
-  Future<dynamic> postMultipart(
+  Future<dynamic> _postMultipart(
     String path,
     Map<String, String> fields,
     Map<String, http.MultipartFile> files, {
@@ -69,6 +130,8 @@ class FonikaHttpClient {
     }
     return _handleJson(response);
   }
+
+  // ---------------------------------------------------------------------------
 
   Map<String, dynamic> _handleJson(http.Response response) {
     _checkStatus(response);
