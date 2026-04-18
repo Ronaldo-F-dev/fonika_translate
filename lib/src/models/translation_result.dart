@@ -47,6 +47,30 @@ class TranslationResult {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+        'success': success,
+        'translatedText': translatedText,
+        'sourceLanguage': sourceLanguage,
+        'sourceLanguageName': sourceLanguageName,
+        'targetLanguage': targetLanguage,
+        'targetLanguageName': targetLanguageName,
+        'originalText': originalText,
+        'fromLocal': fromLocal,
+      };
+
+  factory TranslationResult.fromCacheJson(Map<String, dynamic> json) {
+    return TranslationResult(
+      success: json['success'] as bool,
+      translatedText: json['translatedText'] as String,
+      sourceLanguage: json['sourceLanguage'] as String,
+      sourceLanguageName: json['sourceLanguageName'] as String,
+      targetLanguage: json['targetLanguage'] as String,
+      targetLanguageName: json['targetLanguageName'] as String,
+      originalText: json['originalText'] as String,
+      fromLocal: json['fromLocal'] as bool? ?? false,
+    );
+  }
+
   @override
   String toString() => 'TranslationResult($originalText → $translatedText [$targetLanguage])';
 }

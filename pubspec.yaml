@@ -27,6 +27,7 @@ dependencies:
   flutter_tts: ^4.0.0
   speech_to_text: ^7.0.0
   audioplayers: ^6.0.0
+  shared_preferences: ^2.3.0
 
 dev_dependencies:
   flutter_test:
