@@ -3,7 +3,9 @@
 **Multilingual translation, TTS and ASR for Flutter** — built by [229Langues](https://229langues.bj).
 
 Supports African languages (Fon, Yoruba, Hausa, Adja, Bariba) + 100+ world languages.  
-**Offline-first**: local translations are always checked before any API call.
+**Offline-first**: local keys → device cache → API, with automatic retry and exponential backoff.
+
+[![pub version](https://img.shields.io/pub/v/fonika_translate.svg)](https://pub.dev/packages/fonika_translate)
 
 ---
 
@@ -16,10 +18,12 @@ Supports African languages (Fon, Yoruba, Hausa, Adja, Bariba) + 100+ world langu
 | TTS (audio synthesis) | ✅ API → Fon, Yoruba, Hausa | ✅ Platform TTS (flutter_tts) |
 | ASR (speech-to-text) | ✅ API → Fon, Adja, Yoruba, Hausa | ✅ Platform ASR (speech_to_text) |
 | Local translations (offline) | ✅ | ✅ |
+| Device cache (SharedPreferences) | ✅ | ✅ |
+| Retry with backoff | ✅ | ✅ |
+| Flutter widgets | ✅ | ✅ |
 | PDF translation | ✅ | ✅ |
 | TXT file translation | ✅ | ✅ |
 | PDF text extraction | ✅ | ✅ |
-| Translation cache | ✅ | ✅ |
 
 ---
 
@@ -27,7 +31,7 @@ Supports African languages (Fon, Yoruba, Hausa, Adja, Bariba) + 100+ world langu
 
 ```yaml
 dependencies:
-  fonika_translate: ^0.0.1
+  fonika_translate: ^0.1.0
 ```
 
 ### Android permissions
@@ -57,13 +61,113 @@ Add to `ios/Runner/Info.plist`:
 ```dart
 import 'package:fonika_translate/fonika_translate.dart';
 
-final fonika = FonikaTranslate(apiToken: 'YOUR_HF_TOKEN');
+final fonika = FonikaTranslate(
+  apiToken: 'YOUR_HF_TOKEN',   // Hugging Face token
+  maxRetries: 3,               // retries on 5xx / 429
+  deviceCacheTtl: const Duration(days: 7),
+);
+
 await fonika.init();
 ```
 
 ---
 
+## Flutter widgets
+
+### FonikaProvider
+
+Wrap your app once with `FonikaProvider` to make the client available anywhere in the widget tree:
+
+```dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final fonika = FonikaTranslate(apiToken: 'YOUR_HF_TOKEN');
+  await fonika.init();
+
+  // Load your local translations (optional)
+  fonika.loadTranslations({
+    'fr': {'greeting': 'Bonjour !', 'app': {'title': 'Mon App'}},
+    'en': {'greeting': 'Hello!',    'app': {'title': 'My App'}},
+  });
+
+  runApp(
+    FonikaProvider(
+      client: fonika,
+      child: const MyApp(),
+    ),
+  );
+}
+```
+
+Retrieve the client anywhere below in the tree:
+
+```dart
+final fonika = FonikaProvider.of(context);
+```
+
+### FonikaTranslatedText
+
+Translates a key or plain text and renders it as a `Text` widget. Checks local translations first — no network call if the key is found:
+
+```dart
+// Resolves 'greeting' from local translations → 'Hello!' (toLang: en)
+FonikaTranslatedText(
+  'greeting',
+  toLang: 'en',
+  style: const TextStyle(fontWeight: FontWeight.bold),
+)
+
+// Falls back to API for arbitrary text
+FonikaTranslatedText(
+  'Bonjour le monde',
+  toLang: 'en',
+)
+```
+
+### FonikaSpeakButton
+
+A ready-to-use speak icon button. Automatically routes to the 229Langues API for African languages and to the platform TTS for all other languages:
+
+```dart
+FonikaSpeakButton(
+  text: 'Bonjour le monde',
+  language: 'fr',    // platform TTS
+  iconSize: 28,
+)
+
+FonikaSpeakButton(
+  text: 'È dó wɛ̀',
+  language: 'fon',   // 229Langues API
+  iconSize: 28,
+)
+```
+
+### FonikaListenButton
+
+A mic toggle button that uses the platform ASR engine. Fires `onResult` with the final transcript and `onPartialResult` during speech:
+
+```dart
+FonikaListenButton(
+  language: 'fr',
+  iconSize: 36,
+  onResult:        (text) => print('Final: $text'),
+  onPartialResult: (text) => print('Partial: $text'),
+  onError:         (e)    => print('Error: $e'),
+)
+```
+
+---
+
 ## Translation
+
+### Priority chain
+
+Every `translate()` call follows this order — no API call is made unless necessary:
+
+1. **Local translations** — keys loaded via `loadTranslations()` or assets
+2. **Device cache** — SharedPreferences cache (configurable TTL)
+3. **229Langues API** — network call with automatic retry/backoff
 
 ### Single text
 
@@ -74,7 +178,7 @@ final result = await fonika.translate(
   toLang: 'en',
 );
 print(result.translatedText); // Hello, how are you?
-print(result.fromLocal);      // false — came from API
+print(result.fromLocal);      // true if from local/cache, false if from API
 ```
 
 ### Batch
@@ -82,12 +186,23 @@ print(result.fromLocal);      // false — came from API
 ```dart
 final result = await fonika.translateBatch(
   ['Bonjour', 'Merci', 'Au revoir'],
-  fromLang: 'fr',
   toLang: 'en',
 );
 for (final item in result.items) {
   print('${item.originalText} → ${item.translatedText}');
 }
+```
+
+### Advanced options
+
+```dart
+await fonika.translate(
+  'text',
+  toLang: 'en',
+  skipLocal: false,       // set true to bypass local translations
+  skipDeviceCache: false, // set true to bypass device cache
+  saveToCache: true,      // set false to skip writing to device cache
+);
 ```
 
 ### Supported languages
@@ -101,7 +216,7 @@ print('${langs.total} languages available');
 
 ## Local translations (offline-first)
 
-Local translations are **always checked first**. If a key is found, no API call is made.
+Local translations are **always checked first**. A matching key never triggers a network call.
 
 ### Load from a Map
 
@@ -117,26 +232,22 @@ fonika.loadTranslations({
   },
 });
 
-// Resolved locally — no network call
 final t = await fonika.translate('greeting', toLang: 'fr');
 print(t.translatedText); // Bonjour !
 print(t.fromLocal);      // true
 ```
 
-Nested keys are flattened using dot-notation: `app.title`, `auth.login.button`, etc.
+Nested keys are flattened with dot-notation: `app.title`, `auth.login.button`, etc.
 
 ### Load from Flutter assets
 
-Add your JSON files to `pubspec.yaml`:
-
 ```yaml
+# pubspec.yaml
 flutter:
   assets:
     - assets/i18n/fr.json
     - assets/i18n/en.json
 ```
-
-Then load them:
 
 ```dart
 await fonika.init(assetPaths: [
@@ -144,7 +255,7 @@ await fonika.init(assetPaths: [
   'assets/i18n/en.json',
 ]);
 
-// Or after init:
+// Or load additional locales after init:
 await fonika.loadTranslationAssets(['assets/i18n/de.json']);
 ```
 
@@ -169,6 +280,47 @@ final value = fonika.localTranslate('auth.login', 'fr');
 
 ---
 
+## Device cache
+
+Translations returned by the API are automatically stored in SharedPreferences and reused on subsequent calls (until TTL expires). Configure the TTL in the constructor:
+
+```dart
+final fonika = FonikaTranslate(
+  apiToken: 'YOUR_HF_TOKEN',
+  deviceCacheTtl: const Duration(days: 7), // default: 7 days
+);
+```
+
+### Cache management
+
+```dart
+// Number of entries currently cached
+final count = await fonika.getDeviceCacheCount();
+
+// Remove only expired entries
+final removed = await fonika.evictExpiredDeviceCache();
+
+// Wipe the entire device cache
+await fonika.clearDeviceCache();
+```
+
+---
+
+## Retry and backoff
+
+The client automatically retries failed requests on HTTP 5xx and 429 (rate limit) responses — useful for HuggingFace cold starts:
+
+```dart
+final fonika = FonikaTranslate(
+  apiToken: 'YOUR_HF_TOKEN',
+  maxRetries: 3, // attempts: 1 initial + 3 retries
+);
+```
+
+Backoff delays: **1 s → 2 s → 4 s** (exponential doubling).
+
+---
+
 ## TTS (Text-to-Speech)
 
 ### Speak — auto routing
@@ -179,9 +331,11 @@ final value = fonika.localTranslate('auth.login', 'fr');
 // French → platform TTS (flutter_tts)
 await fonika.speak('Bonjour le monde', 'fr');
 
-// Fon → 229Langues API audio (plays via audioplayers)
+// Fon → 229Langues API (plays via audioplayers)
 await fonika.speak('È dó wɛ̀', 'fon');
 ```
+
+**African TTS languages**: `fon`, `yoruba`, `hausa`
 
 ### Get raw audio bytes (African languages only)
 
@@ -190,8 +344,6 @@ final tts = await fonika.tts('È dó wɛ̀', 'fon');
 // tts.audioBytes — Uint8List (WAV for Fon, MP3 for Yoruba/Hausa)
 // tts.audioFormat — 'wav' or 'mp3'
 ```
-
-**African TTS languages**: `fon`, `yoruba`, `hausa`
 
 ### Platform TTS controls
 
@@ -216,7 +368,7 @@ final result = await fonika.transcribeAudio(
   'fon',
 );
 print(result.transcription);
-print(result.duration); // in seconds
+print(result.duration); // seconds
 ```
 
 **African ASR languages**: `fon`, `adja`, `yoruba`, `hausa`
@@ -227,7 +379,7 @@ print(result.duration); // in seconds
 await fonika.startListening(
   'fr',
   onResult: (text, isFinal) {
-    print('$text${isFinal ? ' ✓' : '...'}');
+    print('$text${isFinal ? ' [final]' : '...'}');
   },
   onDone: () => print('Done'),
   listenFor: const Duration(seconds: 30),
@@ -269,29 +421,19 @@ final txt = await fonika.translateTxtFile(File('doc.txt'), toLang: 'en');
 
 ---
 
-## Cache & Health
+## API cache & health
 
 ```dart
+// Server-side cache stats
 final stats = await fonika.getCacheStats();
 print('${stats.totalCached} cached, hit rate: ${stats.hitRate}');
 
-await fonika.clearCache();
+// Clear server-side cache
+await fonika.clearApiCache();
 
+// API health
 final health = await fonika.healthCheck();
 print(health.isHealthy); // true
-```
-
----
-
-## Advanced: LocalTranslationsService
-
-Access the underlying service for fine-grained control:
-
-```dart
-fonika.local.merge('fr', {'new.key': 'nouvelle valeur'});
-fonika.local.unload('de');
-print(fonika.local.loadedLanguages);
-print(fonika.local.totalKeys);
 ```
 
 ---
@@ -306,6 +448,17 @@ try {
 } on UnsupportedError catch (e) {
   print('Language not supported: $e');
 }
+```
+
+---
+
+## Advanced: LocalTranslationsService
+
+```dart
+fonika.local.merge('fr', {'new.key': 'nouvelle valeur'});
+fonika.local.unload('de');
+print(fonika.local.loadedLanguages);
+print(fonika.local.totalKeys);
 ```
 
 ---
