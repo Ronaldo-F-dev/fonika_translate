@@ -16,5 +16,12 @@ export 'src/models/voice_languages.dart';
 // Exceptions
 export 'src/client/http_client.dart' show FonikaApiException;
 
-// Local translations (for advanced use)
+// Services (for advanced use)
 export 'src/services/local_translations_service.dart';
+export 'src/services/local_cache_service.dart';
+
+// Widgets
+export 'src/widgets/fonika_listen_button.dart';
+export 'src/widgets/fonika_provider.dart';
+export 'src/widgets/fonika_speak_button.dart';
+export 'src/widgets/fonika_translated_text.dart';

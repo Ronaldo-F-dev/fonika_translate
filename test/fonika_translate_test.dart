@@ -145,4 +145,47 @@ void main() {
       expect(resolveBcp47('xyz'), 'xyz');
     });
   });
+
+  group('TranslationResult serialization (device cache)', () {
+    test('toJson / fromCacheJson round-trip', () {
+      const original = TranslationResult(
+        success: true,
+        translatedText: 'Hello',
+        sourceLanguage: 'fr',
+        sourceLanguageName: 'French',
+        targetLanguage: 'en',
+        targetLanguageName: 'English',
+        originalText: 'Bonjour',
+        fromLocal: false,
+      );
+
+      final json = original.toJson();
+      final restored = TranslationResult.fromCacheJson(json);
+
+      expect(restored.success, original.success);
+      expect(restored.translatedText, original.translatedText);
+      expect(restored.sourceLanguage, original.sourceLanguage);
+      expect(restored.targetLanguage, original.targetLanguage);
+      expect(restored.originalText, original.originalText);
+      expect(restored.fromLocal, original.fromLocal);
+    });
+
+    test('toJson includes all required fields', () {
+      const result = TranslationResult(
+        success: true,
+        translatedText: 'Goodbye',
+        sourceLanguage: 'fr',
+        sourceLanguageName: 'French',
+        targetLanguage: 'en',
+        targetLanguageName: 'English',
+        originalText: 'Au revoir',
+      );
+      final json = result.toJson();
+      expect(json.containsKey('translatedText'), isTrue);
+      expect(json.containsKey('sourceLanguage'), isTrue);
+      expect(json.containsKey('targetLanguage'), isTrue);
+      expect(json.containsKey('originalText'), isTrue);
+      expect(json.containsKey('fromLocal'), isTrue);
+    });
+  });
 }
