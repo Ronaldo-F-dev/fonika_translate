@@ -188,4 +188,69 @@ void main() {
       expect(json.containsKey('fromLocal'), isTrue);
     });
   });
+
+  group('Exception hierarchy', () {
+    test('LanguageNotSupportedException created with language code', () {
+      final exc = LanguageNotSupportedException('xyz');
+      expect(exc.message, contains('xyz'));
+      expect(exc.message, contains('not supported'));
+    });
+
+    test('FonikaNetworkException can include statusCode and originalError', () {
+      final exc = FonikaNetworkException(
+        'Network timeout',
+        statusCode: 504,
+        originalError: 'Gateway timeout',
+      );
+      expect(exc.message, 'Network timeout');
+      expect(exc.statusCode, 504);
+    });
+
+    test('FonikaAuthException for authentication errors', () {
+      final exc = FonikaAuthException('No token provided');
+      expect(exc.message, 'No token provided');
+    });
+
+    test('FonikaInitException for uninitialized client', () {
+      final exc = FonikaInitException();
+      expect(exc.message, contains('not initialized'));
+    });
+
+    test('FonikaAsrException for speech-to-text errors', () {
+      final exc = FonikaAsrException('Microphone access denied');
+      expect(exc.message, 'Microphone access denied');
+    });
+
+    test('FonikaTtsException for text-to-speech errors', () {
+      final exc = FonikaTtsException('TTS engine failed');
+      expect(exc.message, 'TTS engine failed');
+    });
+
+    test('FonikaPdfException for PDF operation errors', () {
+      final exc = FonikaPdfException('PDF parsing failed');
+      expect(exc.message, 'PDF parsing failed');
+    });
+
+    test('FonikaApiException with statusCode and responseBody', () {
+      final exc = FonikaApiException(
+        500,
+        'Internal server error',
+        responseBody: '{"error": "Database connection failed"}',
+      );
+      expect(exc.statusCode, 500);
+      expect(exc.message, 'Internal server error');
+      expect(exc.responseBody, contains('Database'));
+    });
+
+    test('All exceptions inherit from FonikaException', () {
+      expect(LanguageNotSupportedException('x') is FonikaException, isTrue);
+      expect(FonikaNetworkException('x') is FonikaException, isTrue);
+      expect(FonikaAuthException('x') is FonikaException, isTrue);
+      expect(FonikaInitException() is FonikaException, isTrue);
+      expect(FonikaAsrException('x') is FonikaException, isTrue);
+      expect(FonikaTtsException('x') is FonikaException, isTrue);
+      expect(FonikaPdfException('x') is FonikaException, isTrue);
+      expect(FonikaApiException(500, 'x') is FonikaException, isTrue);
+    });
+  });
 }
