@@ -157,6 +157,29 @@ FonikaListenButton(
 )
 ```
 
+### FonikaTranslationField
+
+A `TextField` that automatically translates its content in real-time as the user types. Perfect for forms where users need live translation feedback:
+
+```dart
+FonikaTranslationField(
+  controller: myController,
+  toLang: 'en',
+  fromLang: 'fr',
+  decoration: const InputDecoration(
+    labelText: 'Type to translate',
+    border: OutlineInputBorder(),
+  ),
+  debounceDuration: const Duration(milliseconds: 500),
+)
+```
+
+The widget displays:
+- **Loading state** while translating
+- **Translated text** below the field in gray italic text
+- **Error messages** if translation fails
+- Custom translation display via `translationBuilder` parameter
+
 ---
 
 ## Translation
@@ -440,15 +463,54 @@ print(health.isHealthy); // true
 
 ## Error handling
 
+The package provides specific exception types for granular error handling:
+
 ```dart
 try {
   await fonika.translate('Hello', toLang: 'fr');
+} on FonikaInitException catch (e) {
+  // fonika.init() was not called
+  print('Initialize first: ${e.message}');
+} on FonikaAuthException catch (e) {
+  // Missing or invalid API token
+  print('Auth error: ${e.message}');
+} on LanguageNotSupportedException catch (e) {
+  // Language code is not supported
+  print('Language "${e.languageCode}" not supported');
+} on FonikaNetworkException catch (e) {
+  // Network timeout or connection issues
+  print('Network error (${e.statusCode}): ${e.message}');
+} on FonikaAsrException catch (e) {
+  // Speech-to-text failed
+  print('ASR error: ${e.message}');
+} on FonikaTtsException catch (e) {
+  // Text-to-speech failed
+  print('TTS error: ${e.message}');
+} on FonikaPdfException catch (e) {
+  // PDF operation failed
+  print('PDF error: ${e.message}');
 } on FonikaApiException catch (e) {
+  // Generic API error
   print('API error ${e.statusCode}: ${e.message}');
-} on UnsupportedError catch (e) {
-  print('Language not supported: $e');
+} on FonikaException catch (e) {
+  // Catch all fonika exceptions
+  print('Fonika error: ${e.message}');
+} catch (e) {
+  // Unexpected error
+  print('Unexpected error: $e');
 }
 ```
+
+**Exception hierarchy:**
+- `FonikaException` (base class)
+  - `FonikaInitException` — client not initialized
+  - `FonikaAuthException` — authentication failed
+  - `LanguageNotSupportedException` — language not supported
+  - `FonikaNetworkException` — network/timeout issues
+  - `FonikaAsrException` — speech-to-text errors
+  - `FonikaTtsException` — text-to-speech errors
+  - `FonikaPdfException` — PDF operation errors
+  - `FonikaApiException` — generic API errors (5xx, 4xx, etc)
 
 ---
 
