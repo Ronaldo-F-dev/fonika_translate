@@ -1,8 +1,18 @@
+/// A single item in a batch translation result.
 class BatchTranslationItem {
+  /// Position in the original batch (0-indexed).
   final int index;
+
+  /// Whether this item was translated successfully.
   final bool success;
+
+  /// The original text that was translated.
   final String originalText;
+
+  /// The translated text, or null if translation failed.
   final String? translatedText;
+
+  /// Error message if translation failed, or null if successful.
   final String? error;
 
   const BatchTranslationItem({
@@ -13,6 +23,7 @@ class BatchTranslationItem {
     this.error,
   });
 
+  /// Creates a [BatchTranslationItem] from API JSON response.
   factory BatchTranslationItem.fromJson(Map<String, dynamic> json) {
     return BatchTranslationItem(
       index: json['index'] as int,
@@ -25,7 +36,10 @@ class BatchTranslationItem {
 }
 
 class BatchTranslationResult {
+  /// Whether the entire batch operation was successful.
   final bool success;
+
+  /// List of translation results, one per input text.
   final List<BatchTranslationItem> items;
 
   const BatchTranslationResult({
@@ -33,6 +47,7 @@ class BatchTranslationResult {
     required this.items,
   });
 
+  /// Creates a [BatchTranslationResult] from API JSON response.
   factory BatchTranslationResult.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as List<dynamic>;
     return BatchTranslationResult(

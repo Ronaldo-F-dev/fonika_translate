@@ -18,14 +18,20 @@ const Map<String, String> africanAudioFormat = {
   'hausa': 'mp3',
 };
 
+/// Internal service for African language TTS and ASR via the 229Langues API.
+///
+/// Handles speech synthesis and speech-to-text for African languages.
+/// Used internally by [FonikaTranslate] — not intended for direct use.
 class AfricanVoiceService {
   final FonikaHttpClient _client;
 
   AfricanVoiceService(this._client);
 
+  /// Returns true if the language is supported for TTS.
   bool supportsTts(String language) =>
       africanTtsLanguages.contains(language.toLowerCase());
 
+  /// Returns true if the language is supported for ASR.
   bool supportsAsr(String language) =>
       africanAsrLanguages.contains(language.toLowerCase());
 

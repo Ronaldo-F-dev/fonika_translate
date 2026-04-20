@@ -4,11 +4,19 @@ import 'package:http/http.dart' as http;
 import '../client/http_client.dart';
 import '../models/pdf_result.dart';
 
+/// Internal service for PDF translation and text extraction.
+///
+/// Handles PDF file operations including translation and text extraction.
+/// Used internally by [FonikaTranslate] — not intended for direct use.
 class PdfService {
   final FonikaHttpClient _client;
 
   PdfService(this._client);
 
+  /// Translates a PDF file.
+  ///
+  /// If [returnJson] is true, returns translated text as JSON.
+  /// If [returnJson] is false, returns the translated PDF as bytes.
   Future<PdfTranslateResult> translatePdf(
     File file, {
     String toLang = 'en',
@@ -40,6 +48,9 @@ class PdfService {
     return PdfTranslateResult.fromBytes(bytes);
   }
 
+  /// Extracts text from a PDF file without translation.
+  ///
+  /// Returns a [PdfExtractResult] containing the full text and per-page text.
   Future<PdfExtractResult> extractText(File file) async {
     final multipartFile = await http.MultipartFile.fromPath('file', file.path);
     final json = await _client.postMultipart(

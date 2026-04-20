@@ -313,11 +313,13 @@ class FonikaTranslate {
     return _africanVoice.tts(text, lang);
   }
 
+  /// Stops the current speech playing from [speak].
   Future<void> stopSpeaking() async {
     _assertInit();
     await _europeanVoice.stopSpeaking();
   }
 
+  /// Pauses the current speech playing from [speak].
   Future<void> pauseSpeaking() async {
     _assertInit();
     await _europeanVoice.pauseSpeaking();
@@ -365,11 +367,13 @@ class FonikaTranslate {
     );
   }
 
+  /// Stops live speech recognition.
   Future<void> stopListening() {
     _assertInit();
     return _europeanVoice.stopListening();
   }
 
+  /// Returns true if speech recognition is currently active.
   bool get isListening => _europeanVoice.isListening;
 
   /// Returns locales available for ASR on the device.
@@ -401,6 +405,9 @@ class FonikaTranslate {
   }
 
   /// Translates a plain text (.txt) file.
+  ///
+  /// If [returnJson] is true (default), returns the translated text as a string.
+  /// Otherwise, returns a text file with translated content.
   Future<PdfTranslateResult> translateTxtFile(
     File file, {
     String toLang = 'en',
@@ -420,6 +427,7 @@ class FonikaTranslate {
   /// Clears the remote API cache.
   Future<void> clearApiCache() => _cache.clear();
 
+  /// Checks the health status of the API and its dependencies.
   Future<HealthStatus> healthCheck() => _cache.healthCheck();
 
   // ---------------------------------------------------------------------------

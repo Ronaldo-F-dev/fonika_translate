@@ -1,11 +1,30 @@
+/// Result of a single text translation operation.
+///
+/// Contains the translated text, language metadata, and origin information
+/// (whether it came from local translations, device cache, or API).
 class TranslationResult {
+  /// Whether the API call was successful.
   final bool success;
+
+  /// The translated text.
   final String translatedText;
+
+  /// ISO 639-1 code of the detected or specified source language (e.g. 'fr').
   final String sourceLanguage;
+
+  /// Human-readable name of the source language (e.g. 'French').
   final String sourceLanguageName;
+
+  /// ISO 639-1 code of the target language (e.g. 'en').
   final String targetLanguage;
+
+  /// Human-readable name of the target language (e.g. 'English').
   final String targetLanguageName;
+
+  /// The original text that was translated.
   final String originalText;
+
+  /// Whether this translation came from local translations (true) or API (false).
   final bool fromLocal;
 
   const TranslationResult({
@@ -19,6 +38,7 @@ class TranslationResult {
     this.fromLocal = false,
   });
 
+  /// Creates a [TranslationResult] from API JSON response.
   factory TranslationResult.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as Map<String, dynamic>;
     final meta = data['metadata'] as Map<String, dynamic>? ?? {};
