@@ -38,7 +38,7 @@ class FonikaTranslationField extends StatefulWidget {
   /// Custom builder to display the translation result.
   /// If null, a default gray text display is used.
   /// Called with the [TranslationResult] or an error message.
-  final Widget Function(BuildContext context, AsyncSnapshot<TranslationResult> snapshot)?
+  final Widget Function(BuildContext context, AsyncSnapshot<TranslationResult?> snapshot)?
       translationBuilder;
 
   /// Debounce duration for translation requests. Default 500ms.
@@ -90,7 +90,7 @@ class FonikaTranslationField extends StatefulWidget {
 class _FonikaTranslationFieldState extends State<FonikaTranslationField> {
   late FonikaTranslate _fonika;
   Timer? _debounceTimer;
-  AsyncSnapshot<TranslationResult> _translationSnapshot =
+  AsyncSnapshot<TranslationResult?> _translationSnapshot =
       const AsyncSnapshot.withData(ConnectionState.none, null);
   String _lastTranslatedText = '';
 
@@ -231,7 +231,7 @@ class _FonikaTranslationFieldState extends State<FonikaTranslationField> {
       );
     }
 
-    if (_translationSnapshot.hasData) {
+    if (_translationSnapshot.hasData && _translationSnapshot.data != null) {
       final result = _translationSnapshot.data!;
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),

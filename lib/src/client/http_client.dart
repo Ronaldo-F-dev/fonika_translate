@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../exceptions.dart';
+
 class FonikaHttpClient {
   final String baseUrl;
   final String? apiToken;
@@ -141,8 +143,8 @@ class FonikaHttpClient {
   void _checkStatus(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw FonikaApiException(
-        statusCode: response.statusCode,
-        message: _extractError(response.body),
+        response.statusCode,
+        _extractError(response.body),
       );
     }
   }
@@ -157,14 +159,4 @@ class FonikaHttpClient {
       return body;
     }
   }
-}
-
-class FonikaApiException implements Exception {
-  final int statusCode;
-  final String message;
-
-  const FonikaApiException({required this.statusCode, required this.message});
-
-  @override
-  String toString() => 'FonikaApiException($statusCode): $message';
 }

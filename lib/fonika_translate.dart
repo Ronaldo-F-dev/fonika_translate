@@ -15,7 +15,6 @@ export 'src/models/voice_languages.dart';
 
 // Exceptions
 export 'src/exceptions.dart';
-export 'src/client/http_client.dart' show FonikaApiException;
 
 // Services (for advanced use)
 export 'src/services/local_translations_service.dart';
