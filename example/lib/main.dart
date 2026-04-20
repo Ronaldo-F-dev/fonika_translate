@@ -9,7 +9,7 @@ void main() async {
   await dotenv.load(fileName: '.env');
 
   fonika = FonikaTranslate(
-    apiToken: dotenv.env['HF_TOKEN'],
+    apiToken: dotenv.env['TOKEN'],
     maxRetries: 3,
     deviceCacheTtl: const Duration(days: 7),
   );
@@ -142,17 +142,43 @@ class _TranslationTabState extends State<_TranslationTab> {
 
   Future<void> _translate() async {
     setState(() { _loading = true; _result = ''; });
-    final r = await fonika.translate(
-      _controller.text,
-      fromLang: 'auto',
-      toLang: 'en',
-    );
+    try {
+      final r = await fonika.translate(
+        _controller.text,
+        fromLang: 'auto',
+        toLang: 'en',
+      );
+      setState(() {
+        _loading = false;
+        _result = r.translatedText;
+        _source = r.fromLocal ? 'local' : 'API';
+        _fromLocal = r.fromLocal;
+      });
+    } on FonikaNetworkException catch (e) {
+      _showError('Network error: ${e.message}');
+    } on FonikaAuthException catch (e) {
+      _showError('Auth error: ${e.message}');
+    } on FonikaException catch (e) {
+      _showError('Fonika error: ${e.message}');
+    } catch (e) {
+      _showError('Unexpected error: $e');
+    }
+  }
+
+  void _showError(String message) {
     setState(() {
       _loading = false;
-      _result = r.translatedText;
-      _source = r.fromLocal ? 'local' : 'API';
-      _fromLocal = r.fromLocal;
+      _result = '';
+      _source = 'ERROR';
+      _fromLocal = false;
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   Future<void> _translateLocalKey() async {
@@ -239,6 +265,25 @@ class _TranslationTabState extends State<_TranslationTab> {
               body: _result,
               color: _fromLocal ? Colors.green.shade50 : Colors.blue.shade50,
             ),
+
+          const SizedBox(height: 24),
+
+          // --- Widget FonikaTranslationField (traduction en direct) ---
+          _section('FonikaTranslationField (Traduction en direct)'),
+          const Text('Tapez pour voir la traduction s\'afficher en temps réel :',
+              style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 12),
+          FonikaTranslationField(
+            controller: TextEditingController(text: 'Bonjour'),
+            toLang: 'en',
+            fromLang: 'fr',
+            decoration: const InputDecoration(
+              labelText: 'Texte (traduit en temps réel)',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.edit),
+            ),
+            debounceDuration: const Duration(milliseconds: 500),
+          ),
         ],
       ),
     );
