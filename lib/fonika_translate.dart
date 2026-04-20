@@ -14,6 +14,7 @@ export 'src/models/tts_result.dart';
 export 'src/models/voice_languages.dart';
 
 // Exceptions
+export 'src/exceptions.dart';
 export 'src/client/http_client.dart' show FonikaApiException;
 
 // Services (for advanced use)
@@ -25,3 +26,4 @@ export 'src/widgets/fonika_listen_button.dart';
 export 'src/widgets/fonika_provider.dart';
 export 'src/widgets/fonika_speak_button.dart';
 export 'src/widgets/fonika_translated_text.dart';
+export 'src/widgets/fonika_translation_field.dart';
