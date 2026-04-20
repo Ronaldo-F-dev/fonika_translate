@@ -62,7 +62,7 @@ Add to `ios/Runner/Info.plist`:
 import 'package:fonika_translate/fonika_translate.dart';
 
 final fonika = FonikaTranslate(
-  apiToken: 'YOUR_TOKEN',      // API token
+  apiToken: 'YOUR_TOKEN',      // API token from Hugging Face
   maxRetries: 3,               // retries on 5xx / 429
   deviceCacheTtl: const Duration(days: 7),
 );
@@ -70,12 +70,9 @@ final fonika = FonikaTranslate(
 await fonika.init();
 ```
 
-**Test token:** For quick testing, you can use:
-```
-YOUR_TOKEN
-```
-
-This token works with all features (translation, TTS, ASR, PDF operations) for testing and demos.
+**Getting a token:**
+- Visit [Hugging Face Tokens](https://huggingface.co/settings/tokens) to create your API token
+- **For testing:** Contact [229Langues](https://229langues.bj) for a public test token
 
 ---
 
@@ -89,11 +86,7 @@ Wrap your app once with `FonikaProvider` to make the client available anywhere i
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final fonika = FonikaTranslate(
-    apiToken: 'YOUR_TOKEN', // Test token
-    // Or use your own token:
-    // apiToken: dotenv.env['TOKEN'],
-  );
+  final fonika = FonikaTranslate(apiToken: 'YOUR_TOKEN');
   await fonika.init();
 
   // Load your local translations (optional)
