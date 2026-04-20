@@ -70,6 +70,13 @@ final fonika = FonikaTranslate(
 await fonika.init();
 ```
 
+**Test token:** For quick testing, you can use:
+```
+YOUR_TOKEN
+```
+
+This token works with all features (translation, TTS, ASR, PDF operations) for testing and demos.
+
 ---
 
 ## Flutter widgets
@@ -82,7 +89,11 @@ Wrap your app once with `FonikaProvider` to make the client available anywhere i
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final fonika = FonikaTranslate(apiToken: 'YOUR_TOKEN');
+  final fonika = FonikaTranslate(
+    apiToken: 'YOUR_TOKEN', // Test token
+    // Or use your own token:
+    // apiToken: dotenv.env['TOKEN'],
+  );
   await fonika.init();
 
   // Load your local translations (optional)
