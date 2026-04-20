@@ -62,7 +62,7 @@ Add to `ios/Runner/Info.plist`:
 import 'package:fonika_translate/fonika_translate.dart';
 
 final fonika = FonikaTranslate(
-  apiToken: 'YOUR_HF_TOKEN',   // Hugging Face token
+  apiToken: 'YOUR_TOKEN',      // API token
   maxRetries: 3,               // retries on 5xx / 429
   deviceCacheTtl: const Duration(days: 7),
 );
@@ -82,7 +82,7 @@ Wrap your app once with `FonikaProvider` to make the client available anywhere i
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final fonika = FonikaTranslate(apiToken: 'YOUR_HF_TOKEN');
+  final fonika = FonikaTranslate(apiToken: 'YOUR_TOKEN');
   await fonika.init();
 
   // Load your local translations (optional)
@@ -286,7 +286,7 @@ Translations returned by the API are automatically stored in SharedPreferences a
 
 ```dart
 final fonika = FonikaTranslate(
-  apiToken: 'YOUR_HF_TOKEN',
+  apiToken: 'YOUR_TOKEN',
   deviceCacheTtl: const Duration(days: 7), // default: 7 days
 );
 ```
@@ -308,11 +308,11 @@ await fonika.clearDeviceCache();
 
 ## Retry and backoff
 
-The client automatically retries failed requests on HTTP 5xx and 429 (rate limit) responses — useful for HuggingFace cold starts:
+The client automatically retries failed requests on HTTP 5xx and 429 (rate limit) responses — useful for API cold starts:
 
 ```dart
 final fonika = FonikaTranslate(
-  apiToken: 'YOUR_HF_TOKEN',
+  apiToken: 'YOUR_TOKEN',
   maxRetries: 3, // attempts: 1 initial + 3 retries
 );
 ```
