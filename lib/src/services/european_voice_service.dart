@@ -202,11 +202,11 @@ class EuropeanVoiceService {
           onDone?.call();
         }
       },
-      pauseFor: pauseFor ?? const Duration(seconds: 3),
       listenOptions: SpeechListenOptions(
         cancelOnError: true,
         localeId: locale,
         listenFor: listenFor ?? const Duration(seconds: 30),
+        pauseFor: pauseFor ?? const Duration(seconds: 3),
       ),
     );
 

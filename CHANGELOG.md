@@ -1,3 +1,8 @@
+## 0.2.1
+
+- Fix: moved deprecated `pauseFor` option to `SpeechListenOptions` for `speech_to_text`
+- Improved static analysis compatibility with current Flutter/Dart tooling
+
 ## 0.2.0
 
 - Breaking: authentication now requires both `authorizationToken` and `apiToken`

@@ -1,7 +1,7 @@
 name: fonika_translate
 description: >-
   Flutter translation, TTS, and ASR for African and world languages.
-version: 0.2.0
+version: 0.2.1
 homepage: https://229langues.bj
 repository: https://github.com/Ronaldo-F-dev/fonika_translate
 issue_tracker: https://github.com/Ronaldo-F-dev/fonika_translate/issues

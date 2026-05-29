@@ -31,7 +31,7 @@ Supports African languages (Fon, Yoruba, Hausa, Adja, Bariba) + 100+ world langu
 
 ```yaml
 dependencies:
-  fonika_translate: ^0.2.0
+  fonika_translate: ^0.2.1
 ```
 
 ### Android permissions
