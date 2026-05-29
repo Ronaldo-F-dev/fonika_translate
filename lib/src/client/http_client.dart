@@ -8,8 +8,11 @@ import '../exceptions.dart';
 
 class FonikaHttpClient {
   final String baseUrl;
-  final String? apiToken;
+  final String apiToken;
+  final Map<String, String> headers;
+  final String authorizationToken;
   final Duration timeout;
+  final http.Client _client;
 
   /// Max number of retry attempts on server errors or timeouts.
   /// Set to 0 to disable retries.
@@ -17,28 +20,34 @@ class FonikaHttpClient {
 
   FonikaHttpClient({
     required this.baseUrl,
-    this.apiToken,
+    required this.apiToken,
+    required this.authorizationToken,
+    Map<String, String>? headers,
     this.timeout = const Duration(seconds: 60),
     this.maxRetries = 3,
-  });
+    http.Client? client,
+  })  : headers = headers ?? const {},
+        _client = client ?? http.Client();
 
-  Map<String, String> get _headers => {
+  Map<String, String> get _jsonHeaders => {
         'Content-Type': 'application/json',
-        if (apiToken != null) 'Authorization': 'Bearer $apiToken',
+        'Authorization': 'Bearer $authorizationToken',
+        'X-API-Key': apiToken,
+        ...headers,
       };
 
-  Map<String, String> get _authOnlyHeaders => {
-        if (apiToken != null) 'Authorization': 'Bearer $apiToken',
+  Map<String, String> get _multipartHeaders => {
+        'Authorization': 'Bearer $authorizationToken',
+        'X-API-Key': apiToken,
+        ...headers,
       };
 
   // ---------------------------------------------------------------------------
   // Public methods — all wrapped with retry
 
-  Future<Map<String, dynamic>> get(String path) =>
-      _withRetry(() => _get(path));
+  Future<Map<String, dynamic>> get(String path) => _withRetry(() => _get(path));
 
-  Future<Map<String, dynamic>> post(
-          String path, Map<String, dynamic> body) =>
+  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) =>
       _withRetry(() => _post(path, body));
 
   Future<Uint8List> postBytes(String path, Map<String, dynamic> body) =>
@@ -50,8 +59,8 @@ class FonikaHttpClient {
     Map<String, http.MultipartFile> files, {
     bool returnBytes = false,
   }) =>
-      _withRetry(() => _postMultipart(path, fields, files,
-          returnBytes: returnBytes));
+      _withRetry(
+          () => _postMultipart(path, fields, files, returnBytes: returnBytes));
 
   // ---------------------------------------------------------------------------
   // Retry logic
@@ -75,8 +84,7 @@ class FonikaHttpClient {
   }
 
   /// Retryable: 5xx server errors and 429 rate limit (HF Spaces cold start).
-  bool _isRetryable(int statusCode) =>
-      statusCode >= 500 || statusCode == 429;
+  bool _isRetryable(int statusCode) => statusCode >= 500 || statusCode == 429;
 
   /// Exponential backoff: 1s, 2s, 4s, 8s…
   Future<void> _backoff(int attempt) =>
@@ -88,24 +96,23 @@ class FonikaHttpClient {
   Future<Map<String, dynamic>> _get(String path) async {
     final uri = Uri.parse('$baseUrl$path');
     final response =
-        await http.get(uri, headers: _headers).timeout(timeout);
+        await _client.get(uri, headers: _jsonHeaders).timeout(timeout);
     return _handleJson(response);
   }
 
   Future<Map<String, dynamic>> _post(
       String path, Map<String, dynamic> body) async {
     final uri = Uri.parse('$baseUrl$path');
-    final response = await http
-        .post(uri, headers: _headers, body: jsonEncode(body))
+    final response = await _client
+        .post(uri, headers: _jsonHeaders, body: jsonEncode(body))
         .timeout(timeout);
     return _handleJson(response);
   }
 
-  Future<Uint8List> _postBytes(
-      String path, Map<String, dynamic> body) async {
+  Future<Uint8List> _postBytes(String path, Map<String, dynamic> body) async {
     final uri = Uri.parse('$baseUrl$path');
-    final response = await http
-        .post(uri, headers: _headers, body: jsonEncode(body))
+    final response = await _client
+        .post(uri, headers: _jsonHeaders, body: jsonEncode(body))
         .timeout(timeout);
     _checkStatus(response);
     return response.bodyBytes;
@@ -119,11 +126,11 @@ class FonikaHttpClient {
   }) async {
     final uri = Uri.parse('$baseUrl$path');
     final request = http.MultipartRequest('POST', uri)
-      ..headers.addAll(_authOnlyHeaders)
+      ..headers.addAll(_multipartHeaders)
       ..fields.addAll(fields)
       ..files.addAll(files.values);
 
-    final streamed = await request.send().timeout(timeout);
+    final streamed = await _client.send(request).timeout(timeout);
     final response = await http.Response.fromStream(streamed);
 
     if (returnBytes) {
@@ -152,9 +159,7 @@ class FonikaHttpClient {
   String _extractError(String body) {
     try {
       final json = jsonDecode(body) as Map<String, dynamic>;
-      return json['detail']?.toString() ??
-          json['message']?.toString() ??
-          body;
+      return json['detail']?.toString() ?? json['message']?.toString() ?? body;
     } catch (_) {
       return body;
     }

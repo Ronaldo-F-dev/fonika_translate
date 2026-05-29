@@ -18,3 +18,4 @@ example/.flutter-plugins-dependencies
 example/pubspec.lock
 example/.idea/
 example/*.iml
+example/.env

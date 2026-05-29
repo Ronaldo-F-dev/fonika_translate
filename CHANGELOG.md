@@ -1,3 +1,10 @@
+## 0.2.0
+
+- Breaking: authentication now requires both `authorizationToken` and `apiToken`
+- `Authorization` and `X-API-Key` are both sent on API requests
+- Removed the hard-coded public authorization token from the package
+- Updated the example app and README for the new env-based setup
+
 ## 0.1.0
 
 - **Device cache**: translations are stored locally with configurable TTL (default 7 days) — works offline after first fetch

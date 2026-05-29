@@ -8,8 +8,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
 
+  final authorizationToken = dotenv.env['AUTHORIZATION_TOKEN'];
+  final apiToken = dotenv.env['API_KEY'];
+
+  if (authorizationToken == null || apiToken == null) {
+    throw StateError('Missing AUTHORIZATION_TOKEN or API_KEY in .env');
+  }
+
   fonika = FonikaTranslate(
-    apiToken: dotenv.env['TOKEN'],
+    authorizationToken: authorizationToken,
+    apiToken: apiToken,
     maxRetries: 3,
     deviceCacheTtl: const Duration(days: 7),
   );
@@ -134,14 +142,18 @@ class _TranslationTab extends StatefulWidget {
 }
 
 class _TranslationTabState extends State<_TranslationTab> {
-  final _controller = TextEditingController(text: 'Bonjour, comment allez-vous ?');
+  final _controller =
+      TextEditingController(text: 'Bonjour, comment allez-vous ?');
   String _result = '';
   String _source = '';
   bool _fromLocal = false;
   bool _loading = false;
 
   Future<void> _translate() async {
-    setState(() { _loading = true; _result = ''; });
+    setState(() {
+      _loading = true;
+      _result = '';
+    });
     try {
       final r = await fonika.translate(
         _controller.text,
@@ -182,7 +194,10 @@ class _TranslationTabState extends State<_TranslationTab> {
   }
 
   Future<void> _translateLocalKey() async {
-    setState(() { _loading = true; _result = ''; });
+    setState(() {
+      _loading = true;
+      _result = '';
+    });
     // "greeting" est dans les traductions locales → zéro appel réseau
     final r = await fonika.translate('greeting', toLang: 'fr');
     setState(() {
@@ -194,7 +209,10 @@ class _TranslationTabState extends State<_TranslationTab> {
   }
 
   Future<void> _translateBatch() async {
-    setState(() { _loading = true; _result = ''; });
+    setState(() {
+      _loading = true;
+      _result = '';
+    });
     final r = await fonika.translateBatch(
       ['greeting', 'Merci beaucoup', 'farewell'],
       toLang: 'en',
@@ -270,7 +288,8 @@ class _TranslationTabState extends State<_TranslationTab> {
 
           // --- Widget FonikaTranslationField (traduction en direct) ---
           _section('FonikaTranslationField (Traduction en direct)'),
-          const Text('Tapez pour voir la traduction s\'afficher en temps réel :',
+          const Text(
+              'Tapez pour voir la traduction s\'afficher en temps réel :',
               style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 12),
           FonikaTranslationField(
@@ -336,21 +355,21 @@ class _VoiceTabState extends State<_VoiceTab> {
           ),
           const SizedBox(height: 12),
           ..._ttsItems.map((item) => Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: FonikaSpeakButton(
-                text: item['text']!,
-                language: item['lang']!,
-                iconSize: 28,
-              ),
-              title: Text(item['text']!,
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text(
-                '${item['label']} — ${item['engine']}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ),
-          )),
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: FonikaSpeakButton(
+                    text: item['text']!,
+                    language: item['lang']!,
+                    iconSize: 28,
+                  ),
+                  title: Text(item['text']!,
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text(
+                    '${item['label']} — ${item['engine']}',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
+              )),
 
           const SizedBox(height: 24),
 
@@ -366,17 +385,14 @@ class _VoiceTabState extends State<_VoiceTab> {
               FonikaListenButton(
                 language: 'fr',
                 iconSize: 36,
-                onResult: (text) =>
-                    setState(() => _sttResult = '✓ "$text"'),
+                onResult: (text) => setState(() => _sttResult = '✓ "$text"'),
                 onPartialResult: (text) =>
                     setState(() => _sttResult = '... $text'),
-                onError: (e) =>
-                    setState(() => _sttResult = 'Erreur: $e'),
+                onError: (e) => setState(() => _sttResult = 'Erreur: $e'),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(_sttResult,
-                    style: const TextStyle(fontSize: 15)),
+                child: Text(_sttResult, style: const TextStyle(fontSize: 15)),
               ),
             ],
           ),
@@ -386,11 +402,36 @@ class _VoiceTabState extends State<_VoiceTab> {
   }
 
   static const _ttsItems = [
-    {'text': 'Bonjour le monde', 'lang': 'fr', 'label': 'Français', 'engine': 'flutter_tts'},
-    {'text': 'Hello world', 'lang': 'en', 'label': 'English', 'engine': 'flutter_tts'},
-    {'text': 'Hola mundo', 'lang': 'es', 'label': 'Español', 'engine': 'flutter_tts'},
-    {'text': 'È dó wɛ̀', 'lang': 'fon', 'label': 'Fon [africain]', 'engine': '229Langues API'},
-    {'text': 'Ẹ káàárọ̀', 'lang': 'yoruba', 'label': 'Yoruba [africain]', 'engine': '229Langues API'},
+    {
+      'text': 'Bonjour le monde',
+      'lang': 'fr',
+      'label': 'Français',
+      'engine': 'flutter_tts'
+    },
+    {
+      'text': 'Hello world',
+      'lang': 'en',
+      'label': 'English',
+      'engine': 'flutter_tts'
+    },
+    {
+      'text': 'Hola mundo',
+      'lang': 'es',
+      'label': 'Español',
+      'engine': 'flutter_tts'
+    },
+    {
+      'text': 'È dó wɛ̀',
+      'lang': 'fon',
+      'label': 'Fon [africain]',
+      'engine': '229Langues API'
+    },
+    {
+      'text': 'Ẹ káàárọ̀',
+      'lang': 'yoruba',
+      'label': 'Yoruba [africain]',
+      'engine': '229Langues API'
+    },
   ];
 }
 
@@ -422,7 +463,10 @@ class _CacheTabState extends State<_CacheTab> {
   }
 
   Future<void> _testCacheHit() async {
-    setState(() { _loading = true; _log = ''; });
+    setState(() {
+      _loading = true;
+      _log = '';
+    });
     final sw1 = Stopwatch()..start();
     final r1 = await fonika.translate('Bonjour', fromLang: 'fr', toLang: 'en');
     sw1.stop();
@@ -453,7 +497,9 @@ class _CacheTabState extends State<_CacheTab> {
   }
 
   Future<void> _checkHealth() async {
-    setState(() { _loading = true; });
+    setState(() {
+      _loading = true;
+    });
     final s = await fonika.healthCheck();
     setState(() {
       _loading = false;
@@ -489,8 +535,7 @@ class _CacheTabState extends State<_CacheTab> {
                 onPressed: _loading ? null : _clearDeviceCache,
                 icon: const Icon(Icons.delete_outline),
                 label: const Text('Vider tout'),
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red),
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
               ),
             ],
           ),
@@ -500,10 +545,9 @@ class _CacheTabState extends State<_CacheTab> {
           ],
           if (_log.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _resultCard(title: 'Résultat', body: _log,
-                color: Colors.orange.shade50),
+            _resultCard(
+                title: 'Résultat', body: _log, color: Colors.orange.shade50),
           ],
-
           const SizedBox(height: 24),
           _section('Retry automatique'),
           const Text(
@@ -516,7 +560,6 @@ class _CacheTabState extends State<_CacheTab> {
           _infoTile(Icons.refresh, 'Max retries', '3'),
           _infoTile(Icons.timelapse, 'Backoff', '1s → 2s → 4s'),
           _infoTile(Icons.wifi_off, 'Codes retryables', '5xx, 429'),
-
           const SizedBox(height: 24),
           _section('Santé de l\'API'),
           _infoTile(Icons.monitor_heart, 'Status', _healthStatus),
@@ -534,7 +577,8 @@ class _CacheTabState extends State<_CacheTab> {
   Widget _infoTile(IconData icon, String label, String value) {
     return ListTile(
       dense: true,
-      leading: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+      leading:
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
       title: Text(label),
       trailing: Text(value,
           style: TextStyle(
@@ -570,7 +614,8 @@ Widget _resultCard(
             style: const TextStyle(
                 fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
         const SizedBox(height: 4),
-        Text(body, style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
+        Text(body,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
       ],
     ),
   );

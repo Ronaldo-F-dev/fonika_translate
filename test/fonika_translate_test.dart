@@ -1,5 +1,19 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fonika_translate/fonika_translate.dart';
+import 'package:fonika_translate/src/client/http_client.dart';
+import 'package:http/http.dart' as http;
+
+class _RecordingClient extends http.BaseClient {
+  _RecordingClient(this.onSend);
+
+  final Future<http.StreamedResponse> Function(http.BaseRequest request) onSend;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      onSend(request);
+}
 
 void main() {
   group('LocalTranslationsService', () {
@@ -34,7 +48,9 @@ void main() {
     });
 
     test('returns null for missing key', () {
-      service.load({'fr': {'hello': 'Bonjour'}});
+      service.load({
+        'fr': {'hello': 'Bonjour'}
+      });
       expect(service.translate('missing.key', 'fr'), isNull);
     });
 
@@ -47,7 +63,9 @@ void main() {
     });
 
     test('merge adds keys to existing language', () {
-      service.load({'fr': {'a': 'Alpha'}});
+      service.load({
+        'fr': {'a': 'Alpha'}
+      });
       service.merge('fr', {'b': 'Beta'});
       expect(service.translate('a', 'fr'), 'Alpha');
       expect(service.translate('b', 'fr'), 'Beta');
@@ -60,7 +78,9 @@ void main() {
     });
 
     test('unload removes a language', () {
-      service.load({'fr': {'key': 'valeur'}});
+      service.load({
+        'fr': {'key': 'valeur'}
+      });
       service.unload('fr');
       expect(service.translate('key', 'fr'), isNull);
     });
@@ -75,13 +95,17 @@ void main() {
     });
 
     test('contains returns correct result', () {
-      service.load({'fr': {'title': 'Titre'}});
+      service.load({
+        'fr': {'title': 'Titre'}
+      });
       expect(service.contains('title', 'fr'), isTrue);
       expect(service.contains('missing', 'fr'), isFalse);
     });
 
     test('keysFor returns all keys for a language', () {
-      service.load({'fr': {'a': '1', 'b': '2', 'c': '3'}});
+      service.load({
+        'fr': {'a': '1', 'b': '2', 'c': '3'}
+      });
       expect(service.keysFor('fr'), containsAll(['a', 'b', 'c']));
     });
 
@@ -123,8 +147,8 @@ void main() {
     });
 
     test('africanAsrLanguages contains fon, adja, yoruba, hausa', () {
-      expect(africanAsrLanguages,
-          containsAll(['fon', 'adja', 'yoruba', 'hausa']));
+      expect(
+          africanAsrLanguages, containsAll(['fon', 'adja', 'yoruba', 'hausa']));
     });
   });
 
@@ -189,6 +213,47 @@ void main() {
     });
   });
 
+  group('FonikaHttpClient headers', () {
+    test('adds public Authorization and X-API-Key on JSON and multipart calls',
+        () async {
+      final requests = <http.BaseRequest>[];
+      final client = _RecordingClient((request) async {
+        requests.add(request);
+        return http.StreamedResponse(
+          Stream<List<int>>.value(utf8.encode('{"ok": true}')),
+          200,
+          request: request,
+          headers: const {'content-type': 'application/json'},
+        );
+      });
+
+      final httpClient = FonikaHttpClient(
+        baseUrl: 'https://example.com',
+        authorizationToken: 'auth-token',
+        apiToken: 'user-token',
+        client: client,
+      );
+
+      await httpClient.get('/ping');
+      final jsonRequest = requests.single as http.Request;
+      expect(jsonRequest.headers['Content-Type'], 'application/json');
+      expect(jsonRequest.headers['Authorization'], 'Bearer auth-token');
+      expect(jsonRequest.headers['X-API-Key'], 'user-token');
+
+      requests.clear();
+
+      final multipartFile = http.MultipartFile.fromString('file', 'demo');
+      await httpClient.postMultipart(
+        '/upload',
+        const {'language': 'fr'},
+        {'file': multipartFile},
+      );
+      final multipartRequest = requests.single as http.MultipartRequest;
+      expect(multipartRequest.headers['Authorization'], 'Bearer auth-token');
+      expect(multipartRequest.headers['X-API-Key'], 'user-token');
+    });
+  });
+
   group('Exception hierarchy', () {
     test('LanguageNotSupportedException created with language code', () {
       final exc = LanguageNotSupportedException('xyz');
@@ -243,14 +308,14 @@ void main() {
     });
 
     test('All exceptions inherit from FonikaException', () {
-      expect(LanguageNotSupportedException('x') is FonikaException, isTrue);
-      expect(FonikaNetworkException('x') is FonikaException, isTrue);
-      expect(FonikaAuthException('x') is FonikaException, isTrue);
-      expect(FonikaInitException() is FonikaException, isTrue);
-      expect(FonikaAsrException('x') is FonikaException, isTrue);
-      expect(FonikaTtsException('x') is FonikaException, isTrue);
-      expect(FonikaPdfException('x') is FonikaException, isTrue);
-      expect(FonikaApiException(500, 'x') is FonikaException, isTrue);
+      expect(LanguageNotSupportedException('x'), isA<FonikaException>());
+      expect(FonikaNetworkException('x'), isA<FonikaException>());
+      expect(FonikaAuthException('x'), isA<FonikaException>());
+      expect(FonikaInitException(), isA<FonikaException>());
+      expect(FonikaAsrException('x'), isA<FonikaException>());
+      expect(FonikaTtsException('x'), isA<FonikaException>());
+      expect(FonikaPdfException('x'), isA<FonikaException>());
+      expect(FonikaApiException(500, 'x'), isA<FonikaException>());
     });
   });
 }

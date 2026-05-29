@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
 
 import 'client/http_client.dart';
 import 'models/batch_result.dart';
@@ -30,7 +31,10 @@ export 'services/european_voice_service.dart' show resolveBcp47, languageBcp47;
 ///
 /// ## Quick start
 /// ```dart
-/// final fonika = FonikaTranslate(apiToken: 'YOUR_TOKEN');
+/// final fonika = FonikaTranslate(
+///   authorizationToken: 'YOUR_AUTHORIZATION_TOKEN',
+///   apiToken: 'YOUR_API_KEY',
+/// );
 /// await fonika.init();
 ///
 /// // API translation
@@ -51,7 +55,9 @@ export 'services/european_voice_service.dart' show resolveBcp47, languageBcp47;
 class FonikaTranslate {
   static const String defaultBaseUrl = 'https://ronaldodev-api.hf.space';
 
-  final String? apiToken;
+  final String authorizationToken;
+  final String apiToken;
+  final Map<String, String> headers;
   final String baseUrl;
   final Duration timeout;
 
@@ -67,7 +73,9 @@ class FonikaTranslate {
   bool _initialized = false;
 
   FonikaTranslate({
-    this.apiToken,
+    required this.authorizationToken,
+    required this.apiToken,
+    Map<String, String>? headers,
     this.baseUrl = defaultBaseUrl,
     this.timeout = const Duration(seconds: 60),
     int maxRetries = 3,
@@ -75,12 +83,16 @@ class FonikaTranslate {
     double ttsSpeechRate = 0.5,
     double ttsPitch = 1.0,
     double ttsVolume = 1.0,
-  }) {
+    http.Client? client,
+  }) : headers = headers ?? const {} {
     _http = FonikaHttpClient(
       baseUrl: baseUrl,
       apiToken: apiToken,
+      authorizationToken: authorizationToken,
+      headers: this.headers,
       timeout: timeout,
       maxRetries: maxRetries,
+      client: client,
     );
     _deviceCache = LocalCacheService(ttl: deviceCacheTtl);
     _translation = TranslationService(_http);
@@ -212,7 +224,8 @@ class FonikaTranslate {
     bool skipLocal = false,
   }) async {
     if (skipLocal) {
-      return _translation.translateBatch(texts, toLang: toLang, fromLang: fromLang);
+      return _translation.translateBatch(texts,
+          toLang: toLang, fromLang: fromLang);
     }
 
     final toApi = <int, String>{};

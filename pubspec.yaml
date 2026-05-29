@@ -1,9 +1,7 @@
 name: fonika_translate
 description: >-
-  Multilingual translation, TTS and ASR for Flutter — African languages
-  (Fon, Yoruba, Hausa, Adja, Bariba) + 100 world languages. Offline-first
-  with local translations support and automatic language detection.
-version: 0.1.0
+  Flutter translation, TTS, and ASR for African and world languages.
+version: 0.2.0
 homepage: https://229langues.bj
 repository: https://github.com/Ronaldo-F-dev/fonika_translate
 issue_tracker: https://github.com/Ronaldo-F-dev/fonika_translate/issues
@@ -22,12 +20,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.0
-  mime: ^1.0.5
-  flutter_tts: ^4.0.0
-  speech_to_text: ^7.0.0
-  audioplayers: ^6.0.0
-  shared_preferences: ^2.3.0
+  http: ^1.6.0
+  mime: ^2.0.0
+  flutter_tts: ^4.2.5
+  speech_to_text: ^7.4.0
+  audioplayers: ^6.6.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

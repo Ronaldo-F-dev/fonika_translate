@@ -11,19 +11,19 @@ Supports African languages (Fon, Yoruba, Hausa, Adja, Bariba) + 100+ world langu
 
 ## Features
 
-| Feature | African languages | European / World languages |
-|---|---|---|
-| Text translation | ✅ API (100+ langs incl. Bariba) | ✅ Same API |
-| Batch translation | ✅ | ✅ |
-| TTS (audio synthesis) | ✅ API → Fon, Yoruba, Hausa | ✅ Platform TTS (flutter_tts) |
-| ASR (speech-to-text) | ✅ API → Fon, Adja, Yoruba, Hausa | ✅ Platform ASR (speech_to_text) |
-| Local translations (offline) | ✅ | ✅ |
-| Device cache (SharedPreferences) | ✅ | ✅ |
-| Retry with backoff | ✅ | ✅ |
-| Flutter widgets | ✅ | ✅ |
-| PDF translation | ✅ | ✅ |
-| TXT file translation | ✅ | ✅ |
-| PDF text extraction | ✅ | ✅ |
+| Feature                          | African languages                 | European / World languages       |
+| -------------------------------- | --------------------------------- | -------------------------------- |
+| Text translation                 | ✅ API (100+ langs incl. Bariba)  | ✅ Same API                      |
+| Batch translation                | ✅                                | ✅                               |
+| TTS (audio synthesis)            | ✅ API → Fon, Yoruba, Hausa       | ✅ Platform TTS (flutter_tts)    |
+| ASR (speech-to-text)             | ✅ API → Fon, Adja, Yoruba, Hausa | ✅ Platform ASR (speech_to_text) |
+| Local translations (offline)     | ✅                                | ✅                               |
+| Device cache (SharedPreferences) | ✅                                | ✅                               |
+| Retry with backoff               | ✅                                | ✅                               |
+| Flutter widgets                  | ✅                                | ✅                               |
+| PDF translation                  | ✅                                | ✅                               |
+| TXT file translation             | ✅                                | ✅                               |
+| PDF text extraction              | ✅                                | ✅                               |
 
 ---
 
@@ -31,7 +31,7 @@ Supports African languages (Fon, Yoruba, Hausa, Adja, Bariba) + 100+ world langu
 
 ```yaml
 dependencies:
-  fonika_translate: ^0.1.0
+  fonika_translate: ^0.2.0
 ```
 
 ### Android permissions
@@ -62,7 +62,8 @@ Add to `ios/Runner/Info.plist`:
 import 'package:fonika_translate/fonika_translate.dart';
 
 final fonika = FonikaTranslate(
-  apiToken: 'YOUR_TOKEN',      // API token from Hugging Face
+  authorizationToken: 'YOUR_AUTHORIZATION_TOKEN',
+  apiToken: 'YOUR_API_KEY',
   maxRetries: 3,               // retries on 5xx / 429
   deviceCacheTtl: const Duration(days: 7),
 );
@@ -71,7 +72,10 @@ await fonika.init();
 ```
 
 **Getting a token:**
-- Visit [Hugging Face Tokens](https://huggingface.co/settings/tokens) to create your API token
+
+- Provide both tokens explicitly when creating the client
+- `authorizationToken` is sent as `Authorization: Bearer <token>`
+- `apiToken` is sent as `X-API-Key`
 - **For testing:** Contact [229Langues](https://229langues.bj) for a public test token
 
 ---
@@ -179,6 +183,7 @@ FonikaTranslationField(
 ```
 
 The widget displays:
+
 - **Loading state** while translating
 - **Translated text** below the field in gray italic text
 - **Error messages** if translation fails
@@ -506,6 +511,7 @@ try {
 ```
 
 **Exception hierarchy:**
+
 - `FonikaException` (base class)
   - `FonikaInitException` — client not initialized
   - `FonikaAuthException` — authentication failed
